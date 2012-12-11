@@ -1,0 +1,38 @@
+#!/bin/sh
+
+set -e
+
+RT_VERSION=4
+
+case "${1}" in
+	configure)
+		# clear mason cache
+		find /var/cache/request-tracker${RT_VERSION}/mason_data -type f -print0 | xargs -r0 rm -f
+
+		# indicate that apache needs to be restarted
+		cat << EOF
+
+If you are using mod_perl or any form of persistent perl process
+such as FastCGI, you will need to restart your web server and any
+persistent processes now.
+
+For mod_perl this means
+
+service apache2 stop && service apache2 start
+
+EOF
+		;;
+
+	abort-upgrade|abort-remove|abort-deconfigure)
+
+		;;
+
+	*)
+		echo "postinst called with unknown argument \`${1}'" >&2
+		exit 1
+		;;
+esac
+
+#DEBHELPER#
+
+exit 0

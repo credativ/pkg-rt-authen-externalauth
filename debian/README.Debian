@@ -1,0 +1,14 @@
+RT-Authen-ExternalAuth for Debian
+=================================
+
+Configuration
+-------------
+Please have a look at the sample configuration file:
+/usr/share/doc/rt4-extension-authenexternalauth/examples/RT_SiteConfig.pm
+
+In order to configure RT-AuthenExternalAuth for Debian you need to place a
+configuration file into /etc/request-tracker4/RT_SiteConfig.d/, execute
+'update-rt-siteconfig' and you'll probably need to restart apache using the
+command '/etc/init.d/apache2 restart'.
+
+ -- Tom Jampen <tom@cryptography.ch>  Mon, 11 Jun 2012 14:51:13 +0200

@@ -1,0 +1,20 @@
+Author: Thomas Sibley <trs@bestpractical.com>
+Description:
+ Redirect correctly on RT 4.0.8, 3.8.15, and the 2012-10-25 security patches
+ .
+ The NextPage session stash started storing hashrefs instead of strings.
+ This manifested as redirects to /HASH(0xDEADBEEF) instead of the proper
+ destination.  Older and unpatched RTs will continue to work correctly
+ due to the "if ref $next" check.
+
+diff -Naurp a/html/Callbacks/ExternalAuth/autohandler/Session b/html/Callbacks/ExternalAuth/autohandler/Session
+--- a/html/Callbacks/ExternalAuth/autohandler/Session	2012-10-30 13:01:56.611512695 +0100
++++ b/html/Callbacks/ExternalAuth/autohandler/Session	2012-10-30 18:12:18.663173646 +0100
+@@ -7,6 +7,7 @@ if (   $m->request_comp->path eq '/NoAut
+     && $ARGS{next} )
+ {
+     my $next = delete $session{'NextPage'}->{ $ARGS{'next'} };
++       $next = $next->{'url'} if ref $next;
+     RT::Interface::Web::Redirect( $next || RT->Config->Get('WebURL') );
+ }
+ </%init>

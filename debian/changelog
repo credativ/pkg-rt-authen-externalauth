@@ -1,0 +1,33 @@
+rt-authen-externalauth (0.10-4) unstable; urgency=low
+
+  * Updating postinst to be more robust when clearing the mason cache by
+    correctly handling a large number of files and not removing
+    directories.
+  * Updating postinst to display apache restart notice.
+
+ -- Tom Jampen <tom@cryptography.ch>  Tue, 11 Dec 2012 12:34:58 +0100
+
+rt-authen-externalauth (0.10-3) unstable; urgency=low
+
+  * Adding patch from Thomas Sibley <trs@bestpractical.com> to redirect
+    correctly on RT 4.0.8, 3.8.15, and the 2012-10-25 security patches
+    (Closes: #691783).
+  * Adding postinst script for clearing the mason cache after configuring
+    the package.
+  * Fixing incorrect line wrap in previous changelog entry.
+
+ -- Tom Jampen <tom@cryptography.ch>  Thu, 08 Nov 2012 07:37:05 +0100
+
+rt-authen-externalauth (0.10-2) unstable; urgency=low
+
+  * Fixing typos in README.Debian.
+  * Adding patch from Alex Vandiver <alex@chmrr.net> to fix privilege
+    escalation bug (Closes: #683288).
+
+ -- Tom Jampen <tom@cryptography.ch>  Thu, 10 Aug 2012 21:53:49 +0200
+
+rt-authen-externalauth (0.10-1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Tom Jampen <tom@cryptography.ch>  Mon, 11 Jun 2012 14:53:37 +0200
