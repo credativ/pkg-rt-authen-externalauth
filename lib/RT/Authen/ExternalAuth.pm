@@ -1,6 +1,6 @@
 package RT::Authen::ExternalAuth;
 
-our $VERSION = '0.10';
+our $VERSION = '0.13';
 
 =head1 NAME
 
@@ -135,6 +135,20 @@ use RT::Authen::ExternalAuth::LDAP;
 use RT::Authen::ExternalAuth::DBI;
 
 use strict;
+
+# Ensure passwords are obfuscated on the System Configuration page
+$RT::Config::META{ExternalSettings}->{Obfuscate} = sub {
+    my ($config, $sources, $user) = @_;
+
+    # XXX $user is never passed from RT as of 4.0.5 :(
+    my $msg = 'Password not printed';
+       $msg = $user->loc($msg) if $user and $user->Id;
+
+    for my $source (values %$sources) {
+        $source->{pass} = $msg;
+    }
+    return $sources;
+};
 
 sub DoAuth {
     my ($session,$given_user,$given_pass) = @_;
@@ -274,12 +288,12 @@ sub DoAuth {
     # If we got here and don't have a user loaded we must have failed to
     # get a full, valid user from an authoritative external source.
     unless ($session->{'CurrentUser'} && $session->{'CurrentUser'}->Id) {
-        delete $session->{'CurrentUser'};
+        $session->{'CurrentUser'} = RT::CurrentUser->new;
         return (0, "No User");
     }
 
     unless($success) {
-        delete $session->{'CurrentUser'};
+        $session->{'CurrentUser'} = RT::CurrentUser->new;
 	return (0, "Password Invalid");
     }
     
@@ -314,7 +328,7 @@ sub DoAuth {
         # Now that we definitely have up-to-date user information,
         # if the user is disabled, kick them out. Now!
         if ($session->{'CurrentUser'}->UserObj->Disabled) {
-            delete $session->{'CurrentUser'};
+            $session->{'CurrentUser'} = RT::CurrentUser->new;
             return (0, "User account disabled, login denied");
         }
     }
@@ -331,8 +345,8 @@ sub DoAuth {
             # Do not delete the session. User stays logged in and
             # autohandler will not check the password again
     } else {
-            # Make SURE the session is deleted.
-            delete $session->{'CurrentUser'};
+            # Make SURE the session is purged to an empty user.
+            $session->{'CurrentUser'} = RT::CurrentUser->new;
             return (0, "Failed to authenticate externally");
             # This will cause autohandler to request IsPassword 
             # which will in turn call IsExternalPassword
@@ -399,23 +413,12 @@ sub UpdateUserInfo {
 
     # For each piece of information returned by CanonicalizeUserInfo,
     # run the Set method for that piece of info to change it for the user
-    foreach my $key (sort(keys(%args))) {
-        next unless $args{$key};
-        my $method = "Set$key";
-        # We do this on the UserObj from above, not self so that there 
-        # are no permission restrictions on setting information
-        my ($method_success,$method_msg) = $UserObj->$method($args{$key});
-        
-        # If your user information is not getting updated, 
-        # uncomment the following logging statements
-        if ($method_success) {
-            # At DEBUG level, log that method succeeded
-            # $RT::Logger->debug((caller(0))[3],"$method Succeeded. $method_msg");
-        } else {
-            # At DEBUG level, log that method failed
-            # $RT::Logger->debug((caller(0))[3],"$method Failed. $method_msg");
-        }
-    }
+    my @results = $UserObj->Update(
+        ARGSRef         => \%args,
+        AttributesRef   => [keys %args],
+    );
+    $RT::Logger->debug("UPDATED user $username: $_")
+        for @results;
 
     # Confirm update success
     $updated = 1;

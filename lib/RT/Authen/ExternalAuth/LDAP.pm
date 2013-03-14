@@ -20,6 +20,7 @@ sub GetAuth {
     my $group           = $config->{'group'};
     my $group_attr      = $config->{'group_attr'};
     my $group_attr_val  = $config->{'group_attr_value'} || 'dn';
+    my $group_scope     = $config->{'group_scope'} || 'base';
     my $attr_map        = $config->{'attr_map'};
     my @attrs           = ('dn');
 
@@ -39,7 +40,7 @@ sub GetAuth {
     $filter = Net::LDAP::Filter->new(   '(&(' . 
                                         $attr_map->{'Name'} . 
                                         '=' . 
-                                        $username . 
+                                        escape_filter_value($username) . 
                                         ')' . 
                                         $filter . 
                                         ')'
@@ -118,6 +119,8 @@ sub GetAuth {
         $RT::Logger->debug( "LDAP Search === ",
                             "Base:",
                             $group,
+                            "== Scope:",
+                            $group_scope,
                             "== Filter:", 
                             $filter->as_string,
                             "== Attrs:", 
@@ -126,7 +129,7 @@ sub GetAuth {
         $ldap_msg = $ldap->search(  base   => $group,
                                     filter => $filter,
                                     attrs  => \@attrs,
-                                    scope  => 'base');
+                                    scope  => $group_scope);
 
         # And the user isn't a member:
         unless ($ldap_msg->code == LDAP_SUCCESS || 
@@ -188,7 +191,7 @@ sub CanonicalizeUserInfo {
     my @attrs = values(%{$config->{'attr_map'}});
 
     # This is a bit confusing and probably broken. Something to revisit..
-    my $filter_addition = ($key && $value) ? "(". $key . "=$value)" : "";
+    my $filter_addition = ($key && $value) ? "(". $key . "=". escape_filter_value($value) .")" : "";
     if(defined($filter) && ($filter ne "()")) {
         $filter = Net::LDAP::Filter->new(   "(&" . 
                                             $filter . 
@@ -315,7 +318,7 @@ sub UserExists {
                                                     '(' . 
                                                     $config->{'attr_map'}->{'Name'} . 
                                                     '=' . 
-                                                    $username . 
+                                                    escape_filter_value($username) . 
                                                     '))'
                                         );
     }
@@ -400,7 +403,7 @@ sub UserDisabled {
                                                     '(' . 
                                                     $config->{'attr_map'}->{'Name'} . 
                                                     '=' . 
-                                                    $username . 
+                                                    escape_filter_value($username) . 
                                                     '))'
                                                 );
     } else {
